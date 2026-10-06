@@ -24,6 +24,12 @@ prompt library built from your own questions.
 
 ### 1.
 
+Explain what the console is and what it's role is in Dispath.
+
 ### 2.
 
+What else can I find from the rook wiki?
+
 ### 3.
+
+Give me a one liner explanation of the Availability Confidence and ping timeout changes and other changes from 4.2

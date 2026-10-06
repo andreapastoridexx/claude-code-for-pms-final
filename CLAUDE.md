@@ -24,4 +24,122 @@ teaching scenario.
 
 ## Working context
 
-_You'll fill this in during Module 1._
+The user is the new PM for **Rook Dispatch**. They joined with no overlap
+with the previous PM (Priya, who left; her handover is dated 21 Aug 2026).
+
+**Where this comes from.** At the time of writing, `00-rook/company/` held
+only one file: `notes/handoff-from-priya.docx`. Everything below comes from
+that file. It's one person's account, and parts of it are her opinion. Where
+something is her judgement and not a fact, it says so. Other sources haven't
+been read yet: `00-rook/code/`, `00-rook/feedback/`, the rook-wiki and the
+rook-database.
+
+### The product
+
+- **Dispatch** is Rook's flagship product, and it's the reason responders
+  stay. The core loop: an **incident** comes in → the system **ranks**
+  available responders → it **offers the callout (pings)** the top-ranked
+  one → they **accept or decline**.
+- Surfaces: a **console** (stable) and **mobile** (stable since 4.1).
+  **Routing**, the ranking logic, is where both the interesting work and
+  the risk are.
+- **Headline metric: acceptance rate**, meaning the share of pings that get
+  taken. Everyone watches it, so be ready to explain what moves it.
+- **There is no written spec for how routing ranks responders.** It lives in
+  the staff engineer's head. Priya asked for one to be written; it's an open
+  task for this PM.
+
+### People (the handover gives roles, not names; fill names in as we learn them)
+
+| Role | What to go to them for |
+|---|---|
+| **Director of Product** | The user's manager. Gives people room. Owns the call on which Q3 commitments still stand. |
+| **Engineering manager (Dispatch)** | Runs Dispatch engineering. Direct; will say when an idea is bad. First stop when unsure. Also the current way to get **data pulls**. |
+| **Staff engineer** | Built the routing/ranking logic. Understanding it means talking to her, because nothing is written down. |
+| **Support lead** | Hears handler complaints first. Priya suggests a standing 15-minute slot. |
+| **Priya** | Previous Dispatch PM, the only PM on it for 14 months. Gone, no overlap. |
+
+### Vocabulary
+
+- **Responder**: the person who gets pinged and takes or turns down a callout.
+- **Handler**: a different group from responders. Handlers write in to
+  support. *Inferred, not stated:* they probably work in the console,
+  managing incidents.
+- **Incident**: the event that starts a dispatch.
+- **Callout / ping**: the offer of an incident to a responder.
+- **Ping timeout**: how long a responder has to answer before the offer moves on.
+- **Acceptance rate**: the share of pings accepted. The north-star number.
+- **Acceptance history**: a responder's past acceptance record. It's one of
+  the routing inputs.
+- **Proximity**: how close a responder is to the incident. Another routing input.
+
+### Where things stand (as of the handover, 21 Aug 2026)
+
+**Release 4.2 shipped on 12 Aug 2026 and is "the thing on fire."** It
+changed two things at once:
+1. **Routing reweight:** proximity now counts for more relative to recent
+   acceptance history. Responders covering wide areas had asked for this
+   for three quarters: nearby people were sitting unoffered while the system
+   pinged someone 40 minutes away with a better record.
+2. **Shorter ping timeout.**
+
+(It also included a **console filter persistence** change.)
+
+**Since 4.2:** fewer pings are being accepted, and more handlers are
+complaining.
+
+**Priya's read (her opinion, not verified):** it's mostly seasonal, because
+August is soft every year, and she expected it to recover in September. She
+strongly advised against framing this as "revert 4.2," since that would swap
+one unhappy group of responders for another. She suggested ruling out
+seasonality before digging into the routing change.
+
+**Things to keep in mind when analysing this:**
+- At least three causes are tangled together: seasonality, the routing
+  reweight and the timeout cut. Don't credit the change to any one of them
+  without separating them.
+- September is over now, so her seasonal prediction can be tested. Compare
+  against previous Augusts and Septembers.
+- Priya admits she "made calls faster than I checked them." Treat her
+  conclusions as hypotheses.
+
+**Open items she left:**
+- **Features cut from 4.2:** some features were dropped when the timeline
+  shrank. Which ones are still Q3 commitments hasn't been agreed with the
+  Director of Product. That conversation is overdue, because Q3 has ended.
+- **Console filter persistence tickets:** Priya calls them cosmetic noise
+  and says not to let them take over the first month.
+- **Write the routing/ranking spec.**
+- Use the first month's fresh eyes on the parts of the product nobody has
+  looked at closely. Priya thinks her unchecked calls are most likely to be
+  hiding there.
+
+### Learned in session 1 (6 Oct 2026), from the rook-wiki and `00-rook/code/`
+
+- **Names:** Helen Achebe is the Director of Product. Marcus Oyelaran is the
+  engineering manager. Wen Li is the staff engineer who owns routing; she was
+  away 14–24 Aug. Nadia Hoffmann is the support lead. **Ravi Menon** is the
+  data analyst who owns the weekly acceptance numbers, so go to him for data
+  rather than Marcus. **Sofia Marino** is the designer for the console and
+  phone app, and she ran the customer interviews in September.
+- **The console** is the handlers' web app. Handlers enter incidents, watch
+  coverage, override individual routing decisions, and set responders'
+  availability windows and capability tags. Handlers can't change routing
+  settings; those ship with each monthly release. Responders use the phone app.
+- **What was cut from 4.2:** Availability Confidence, a confidence score shown
+  next to a responder's stated availability. It's still marked Committed on
+  the Q3 roadmap, which hasn't been reviewed since 30 Jun. Under the roadmap
+  rules, changing a committed item has to go through Product (Helen).
+- **Support tickets since 4.2** run at about 3x normal. Roughly 2/3 say "my
+  phone never goes off" and 1/3 say "it was gone before I could answer". The
+  60-second timeout explains the second group but **not the first**.
+- **Open question:** on 14 Aug, Marcus asked whether the routing change also
+  boosts responders who keep declining jobs, since the config doesn't seem to
+  tell them apart. Nobody has answered. This is a lead for the "phone never
+  goes off" complaints, but it isn't verified yet.
+- The team planned to regroup on 4.2 once the new PM was settled. Nadia has a
+  ticket breakdown ready.
+- **Not yet read:** the customer interviews database, the product briefs, the
+  4.0 and 4.1 release pages, the Glossary, the handler records, the
+  dispatch-routing code (`00-rook/code/dispatch-routing/`, which has the
+  ranking weights in `config.py`), and the rook-database.
