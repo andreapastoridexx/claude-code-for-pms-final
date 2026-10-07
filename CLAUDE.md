@@ -143,3 +143,11 @@ seasonality before digging into the routing change.
   4.0 and 4.1 release pages, the Glossary, the handler records, the
   dispatch-routing code (`00-rook/code/dispatch-routing/`, which has the
   ranking weights in `config.py`), and the rook-database.
+
+### Learned in session 2 (7 Oct 2026), from interviews, tickets, pings and the routing code
+
+- **Sources:** `00-rook/feedback/` is empty. The 4 handler interviews (2–5 Sep) are in the rook-wiki "Customer interviews" database. rook-database has `support_tickets` (147, 29 Jun–7 Sep), `callouts`, `pings`, `responders` and `handlers` (from 29 Jun). There are no travel times, scores or prior years, so ask Ravi for past Augusts and Septembers.
+- **The whole acceptance drop is missed pings.** Before vs after 12 Aug: acceptance 76.6% → 64.0%, missed 2.3% → 18.0%, declines *fell* 21.1% → 18.0%, callouts covered 94.5% → 88.9%. The timeout went from 90s to 60s. Falling declines count against Marcus's "boosts decliners" idea and against seasonality as the explanation for acceptance.
+- **Stuck responders:** Farlight, The Undertow, Vesper and Meteor Mite are down about 85% in pings; Ashgrove and Halfmoon about 55%. They were reliable, missed 4–5 pings in the 4.2 week, and a miss costs the same as a decline (−0.12, vs +0.08 for a yes). Scores never ease back toward neutral (`history.py` TODO from 2019). Now neighbours outrank them *in their own areas*. It's not distance; that guess was wrong.
+- **Tickets vs interviews:** "Phone quiet" (30 tickets) affects 4 responders; "gone before I could answer" (15) is spread across 11. Overload (Kip's The Gale) only shows up in interviews. Filter persistence has 12 complaints since launch, including silent resets, so it's not purely cosmetic. Only Captain Vantage appears in both sources.
+- **Proposal:** restore the timeout, reset the scores of responders who crashed after 12 Aug, and decide whether a miss should count as a decline. Keep the reweight. Take it to Marcus and Wen. **Open:** why the timeout was cut. Next interviews should include Linda Pruitt (Farlight) and Desmond Okafor (The Undertow).
