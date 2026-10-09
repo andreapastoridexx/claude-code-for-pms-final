@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Responder Prototype</title>
+<style>
+:root{
+  --bg:#f4f2ee; --panel:#ffffff; --ink:#1d1f23; --muted:#61666f; --line:#dedad3;
+  --accent:#1f5fbf; --accent-soft:#e6eefb; --good:#1e7a46; --good-soft:#e3f3ea;
+  --bad:#b4372b; --bad-soft:#fbe9e6; --warn:#9a6400; --warn-soft:#fdf1dc;
+  --phone:#14161a; --screen:#f9f9fb; --screen-ink:#1d1f23; --screen-muted:#6b7079; --card:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171b; --panel:#1e2126; --ink:#ebedf0; --muted:#9aa0aa; --line:#30343b;
+    --accent:#6ea2f0; --accent-soft:#1d2a40; --good:#5cc48a; --good-soft:#17301f;
+    --bad:#f0857a; --bad-soft:#3a1d1a; --warn:#e8b45a; --warn-soft:#3a2c14;
+    --phone:#000000; --screen:#202329; --screen-ink:#eef0f3; --screen-muted:#9aa0aa; --card:#2a2e35;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171b; --panel:#1e2126; --ink:#ebedf0; --muted:#9aa0aa; --line:#30343b;
+  --accent:#6ea2f0; --accent-soft:#1d2a40; --good:#5cc48a; --good-soft:#17301f;
+  --bad:#f0857a; --bad-soft:#3a1d1a; --warn:#e8b45a; --warn-soft:#3a2c14;
+  --phone:#000000; --screen:#202329; --screen-ink:#eef0f3; --screen-muted:#9aa0aa; --card:#2a2e35;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 48px}
+header h1{font-size:22px;margin:0 0 4px}
+header p{margin:0;color:var(--muted);max-width:760px}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:18px 0 14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:9px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0d1420}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:#0d1420}}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{border:0;background:none;color:var(--muted);font:inherit;padding:10px 12px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.panel h2{font-size:15px;margin:0 0 10px}
+.panel + .panel{margin-top:14px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 13px;border-radius:9px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;padding:2px 7px;border-radius:999px;vertical-align:middle}
+.tag.must{background:var(--accent-soft);color:var(--accent)}
+.tag.nice{background:var(--warn-soft);color:var(--warn)}
+/* phone */
+.phone{width:300px;max-width:100%;margin:0 auto;background:var(--phone);border-radius:40px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.screen{background:var(--screen);color:var(--screen-ink);border-radius:30px;min-height:560px;padding:16px 16px 20px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.status{display:flex;justify-content:space-between;font-size:12px;font-weight:600;padding:0 6px 12px}
+.appbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.appbar b{font-size:15px}
+.oncall{font-size:12px;color:var(--good);font-weight:600}
+.pcard{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--screen-muted);gap:6px}
+.idle .big{font-size:40px;opacity:.5}
+.ring-wrap{display:flex;justify-content:center;margin:14px 0 6px}
+.ring{position:relative;width:150px;height:150px}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .num b{font-size:38px;line-height:1}
+.ring .num span{font-size:12px;color:var(--screen-muted)}
+.reach{font-size:13px;text-align:center;color:var(--screen-muted);min-height:38px;margin:6px 0 10px}
+.reach .track{height:6px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}
+.reach .fill{height:100%;background:var(--accent);width:0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
+.actions button{font:inherit;font-weight:600;border:0;border-radius:14px;padding:14px;cursor:pointer}
+.accept{background:var(--good);color:#fff}
+.decline{background:var(--card);color:var(--screen-ink);border:1px solid var(--line)!important}
+.actions button:disabled{opacity:.35;cursor:not-allowed}
+.result{flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.result h3{margin:0;font-size:18px}
+.result p{margin:0;font-size:14px;color:var(--screen-muted)}
+.linkbtn{font:inherit;font-size:14px;background:none;border:1px solid var(--line);color:var(--screen-ink);border-radius:12px;padding:10px;cursor:pointer}
+/* queue */
+.scenario{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.rule{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.rule .k{font-size:12px;color:var(--muted)}
+.rule .v{font-weight:650;font-size:16px}
+.rule.changed{border-color:var(--accent);background:var(--accent-soft)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.me td{background:var(--accent-soft)}
+.hbar{display:inline-block;width:70px;height:7px;border-radius:4px;background:var(--line);vertical-align:middle;margin-right:6px;overflow:hidden}
+.hbar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transition:transform .4s}
+.first{font-size:11px;font-weight:700;color:var(--good);background:var(--good-soft);padding:2px 6px;border-radius:999px}
+.log{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto;font-size:14px}
+.log li{padding:8px 0;border-bottom:1px solid var(--line)}
+.log li:last-child{border-bottom:0}
+.d-bad{color:var(--bad);font-weight:650}
+.d-good{color:var(--good);font-weight:650}
+.d-mild{color:var(--warn);font-weight:650}
+/* console */
+.console-row{display:grid;grid-template-columns:1.3fr 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+@media (max-width:640px){.console-row{grid-template-columns:1fr 1fr}}
+.flag{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:8px;grid-column:1/-1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+footer{margin-top:22px;font-size:13px;color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Bringing quiet responders back: prototype</h1>
+    <p>Vesper is a reliable responder whose phone sits upstairs. It takes him about 75 seconds to reach it. Send him a callout and see what happens today, then switch to the fix.</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Which version">
+      <button id="mode-today" aria-pressed="true">Today (4.2)</button>
+      <button id="mode-fix" aria-pressed="false">With the fix</button>
+    </div>
+    <span class="small muted" id="mode-note"></span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" id="tab-phone">Vesper's phone</button>
+    <button role="tab" aria-selected="false" id="tab-console">Handler console (Aunt Dot)</button>
+  </div>
+
+  <!-- PHONE VIEW -->
+  <section id="view-phone">
+    <div class="grid">
+      <div>
+        <div class="phone"><div class="screen" id="screen"></div></div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="scenario" id="scenario"></div>
+          <div class="btns">
+            <button class="btn primary" id="send">Send a callout near Vesper</button>
+            <button class="btn" id="skip" disabled>Skip ahead</button>
+            <button class="btn" id="rewind">Rewind to release day (12 Aug)</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Behind the scenes: who gets asked first in Vesper's area</h2>
+          <div class="rules" id="rules"></div>
+          <table>
+            <thead><tr><th>Responder</th><th>Travel</th><th>Yes-history</th><th>Rank score</th><th></th></tr></thead>
+            <tbody id="queue"></tbody>
+          </table>
+          <p class="small muted" style="margin:10px 0 0">Rank score = 60% travel time + 25% yes-history + 15% skill match (everyone here matches on skill). Highest goes first.</p>
+        </div>
+
+        <div class="panel">
+          <h2>What happened</h2>
+          <ul class="log" id="log"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONSOLE VIEW -->
+  <section id="view-console" hidden>
+    <div class="panel">
+      <h2>Coverage, Aunt Dot's responders <span class="tag nice">Nice to have #6</span></h2>
+      <p class="small muted" style="margin:0 0 6px">Aunt Dot has never filed a ticket. Today, nothing in her console tells her Vesper has stopped being asked. With the fix, it flags him early. This view uses Vesper's state from the phone tab.</p>
+      <div id="console"></div>
+    </div>
+  </section>
+
+  <footer>
+    Prototype only. Nothing is sent. Weights, timeout and the +0.08 / −0.12 scoring come from <code>config.py</code> and <code>history.py</code>.
+    Vesper's 0.90 release-day score is our reconstruction from ping records, not a stored value. The neighbours, travel times and incident are made up for illustration.
+    The −0.03 miss penalty is a placeholder: Wen and Marcus set the real rule.
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const W_PROX=0.60, W_HIST=0.25, W_CAP=0.15, HORIZON=45, YES=0.08, NO=0.12;
+  const REACH=75;            // seconds for Vesper to get to his phone
+  const TICK_MS=80;          // 1 simulated second = 80ms
+  const MODES={
+    today:{label:'Today (4.2)', timeout:60, miss:0.12, vesperStart:0.00,
+      note:'Live rules since 12 Aug.'},
+    fix:{label:'With the fix', timeout:90, miss:0.03, vesperStart:0.90,
+      note:'Must dos: 90s timeout, misses cost less than a no, quiet four restored.'}
+  };
+  let mode='today', state, timer=null, t=0, toastT;
+
+  const $=id=>document.getElementById(id);
+
+  function fresh(){
+    state={
+      people:[
+        {id:'v', name:'Vesper', travel:5, hist:MODES[mode].vesperStart},
+        {id:'a', name:'Neighbour A', travel:12, hist:0.95},
+        {id:'b', name:'Neighbour B', travel:18, hist:0.90}
+      ],
+      phone:'idle', log:[], asked:0, askedFirst:0, missesSinceRelease:0, lastResult:null
+    };
+  }
+  const prox=m=>m>=HORIZON?0:1-m/HORIZON;
+  const rank=p=>W_PROX*prox(p.travel)+W_HIST*p.hist+W_CAP*1;
+  const clamp=x=>Math.max(0,Math.min(1,Math.round(x*100)/100));
+  const ranked=()=>[...state.people].sort((x,y)=>rank(y)-rank(x));
+  const vesper=()=>state.people.find(p=>p.id==='v');
+
+  function log(html){ state.log.unshift(html); }
+
+  // ---------- rendering ----------
+  function renderRules(){
+    const m=MODES[mode], f=mode==='fix';
+    $('rules').innerHTML=[
+      ['Time to answer', m.timeout+' s', f, 'Must do #1'],
+      ['A miss costs', '−'+m.miss.toFixed(2), f, 'Must do #2'],
+      ['A no costs', '−0.12', false],
+      ['A yes earns', '+0.08', false],
+    ].map(([k,v,ch,tag])=>`<div class="rule${ch?' changed':''}"><div class="k">${k}${ch?` · <span class="tag must">${tag}</span>`:''}</div><div class="v">${v}</div></div>`).join('');
+    $('mode-note').textContent=m.note;
+  }
+  function renderQueue(){
+    const r=ranked();
+    $('queue').innerHTML=r.map((p,i)=>`<tr class="${p.id==='v'?'me':''}">
+      <td><b>${p.name}</b>${p.id==='v'&&mode==='fix'&&!state.rewound?' <span class="tag must">Restored · #3</span>':''}</td>
+      <td>${p.travel} min</td>
+      <td><span class="hbar"><i style="transform:scaleX(${p.hist})"></i></span>${p.hist.toFixed(2)}</td>
+      <td>${rank(p).toFixed(3)}</td>
+      <td>${i===0?'<span class="first">Asked first</span>':''}</td></tr>`).join('');
+  }
+  function renderScenario(){
+    const v=vesper(), first=ranked()[0].id==='v';
+    $('scenario').innerHTML = first
+      ? `Vesper is <b>5 minutes</b> from the next incident and currently <b>first in line</b>. His phone is upstairs, so he needs about ${REACH} seconds to answer.`
+      : `Vesper is the <b>closest</b> responder (5 min), but his yes-history is <b>${v.hist.toFixed(2)}</b>, so neighbours further away are asked first. <b>His phone won't ring.</b>`;
+  }
+  function renderLog(){
+    $('log').innerHTML = state.log.length ? state.log.map(l=>`<li>${l}</li>`).join('')
+      : '<li class="muted">Nothing yet. Send a callout.</li>';
+  }
+  function screenHead(){
+    return `<div class="status"><span>9:41</span><span>●●●● 5G</span></div>
+      <div class="appbar"><b>Rook Dispatch</b><span class="oncall">● On call</span></div>`;
+  }
+  function renderPhone(){
+    const s=$('screen'), m=MODES[mode];
+    if(state.phone==='idle'){
+      s.innerHTML=screenHead()+`<div class="idle"><div class="big">☾</div><div><b>No callouts right now</b></div><div class="small">You're on call. We'll buzz you when there's a job near you.</div></div>`;
+    } else if(state.phone==='ringing'){
+      const left=Math.max(0,m.timeout-t), frac=left/m.timeout, C=2*Math.PI*66;
+      const reached=t>=REACH;
+      s.innerHTML=screenHead()+`
+        <div class="pcard"><div class="small" style="color:var(--bad);font-weight:700">NEW CALLOUT</div>
+          <div style="font-weight:650;margin-top:2px">Flooded basement · 5 min away</div>
+          <div class="small" style="color:var(--screen-muted)">Ferry Lane · needs: water damage</div></div>
+        <div class="ring-wrap"><div class="ring">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="66" fill="none" style="stroke:var(--line)" stroke-width="10"/>
+          <circle cx="75" cy="75" r="66" fill="none" style="stroke:${left<=15?'var(--bad)':'var(--accent)'}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-frac)}"/></svg>
+          <div class="num"><b>${Math.ceil(left)}</b><span>seconds to answer</span></div></div></div>
+        <div class="reach">${reached?'<b style="color:var(--good)">Vesper has reached his phone.</b>':`Vesper is on his way downstairs… (${Math.floor(t)}s of ~${REACH}s)`}
+          <div class="track"><div class="fill" style="width:${Math.min(100,t/REACH*100)}%"></div></div></div>
+        <div class="actions"><button class="decline" id="p-decline" ${reached?'':'disabled'}>Decline</button><button class="accept" id="p-accept" ${reached?'':'disabled'}>Accept</button></div>`;
+      if(reached){ $('p-accept').onclick=()=>finish('yes'); $('p-decline').onclick=()=>finish('no'); }
+    } else if(state.phone==='accepted'){
+      s.innerHTML=screenHead()+`<div class="result"><div class="pcard"><h3 style="color:var(--good)">You're on it</h3><p>Flooded basement · Ferry Lane. Directions are ready.</p></div></div>`;
+    } else if(state.phone==='declined'){
+      s.innerHTML=screenHead()+`<div class="result"><div class="pcard"><h3>Declined</h3><p>We've offered it to the next responder.</p></div></div>`;
+    } else if(state.phone==='missed-today'){
+      s.innerHTML=screenHead()+`<div class="idle"><div class="big">☾</div><div><b>No callouts right now</b></div><div class="small">The callout disappeared before he reached the phone. Nothing tells him it happened, or that it counted as a no.</div></div>`;
+    } else if(state.phone==='missed-fix'){
+      s.innerHTML=screenHead()+`<div class="result">
+        <div class="pcard"><span class="tag nice">Nice to have #5</span>
+          <h3 style="margin-top:8px">You missed a callout near you</h3>
+          <p>Flooded basement, 5 min away. It went to the next responder. A miss doesn't count the same as a no.</p></div>
+        <button class="linkbtn" id="p-didnt">My phone didn't ring</button>
+        <button class="linkbtn" id="p-settings">Check my notification settings</button></div>`;
+      $('p-didnt').onclick=()=>{toast('Thanks, reported to Dispatch. (Prototype: nothing is sent.)'); log('Vesper reported <b>"My phone didn\'t ring."</b> This tells the team whether notifications are failing.'); renderLog();};
+      $('p-settings').onclick=()=>toast('Would open notification settings. (Prototype)');
+    }
+  }
+  function renderConsole(){
+    const v=vesper(), first=ranked()[0].id==='v';
+    const rate=state.asked?Math.round(state.askedFirst/state.asked*100):null;
+    const quiet=!first;
+    const flag = mode==='fix'
+      ? (quiet ? `<div class="flag">⚑ <b>Vesper may have gone quiet.</b> He's the closest responder but isn't being asked first in his own area. Yes-history ${v.hist.toFixed(2)}.
+          <div class="btns" style="margin-top:8px"><button class="btn" id="c-check">Check in with Vesper</button><button class="btn" id="c-review">Ask Dispatch to review</button></div></div>` : '')
+      : '';
+    const row=(name,status,area,extra='')=>`<div class="console-row"><div><b>${name}</b><div class="small muted">${status}</div></div>
+      <div class="small">${area}</div><div><span class="first" style="background:var(--good-soft)">On call</span></div>${extra}</div>`;
+    $('console').innerHTML =
+      row('Vesper','Responder', quiet?'Not asked first in his area':'Asked first in his area', flag);
+    if(mode==='today' && quiet){
+      $('console').insertAdjacentHTML('beforeend','<p class="small muted" style="margin:12px 0 0">Today: Vesper looks just like everyone else, "On call". There is no flag, so Dot has no reason to look.</p>');
+    }
+    if($('c-check')){ $('c-check').onclick=()=>toast('Would message Vesper to check in. (Prototype: nothing is sent.)');
+      $('c-review').onclick=()=>toast('Would send Vesper to the Dispatch team to review. (Prototype)'); }
+  }
+  function render(){ renderRules(); renderQueue(); renderScenario(); renderPhone(); renderLog(); renderConsole();
+    $('skip').disabled = state.phone!=='ringing'; $('send').disabled = state.phone==='ringing'; }
+
+  // ---------- simulation ----------
+  function send(){
+    const r=ranked(), top=r[0];
+    state.asked++;
+    if(top.id!=='v'){
+      top.hist=clamp(top.hist+YES);
+      log(`New callout. <b>${top.name}</b> (${top.travel} min away) was asked first and took it. <b>Vesper's phone stayed silent</b>, even though he was 5 min away.`);
+      state.phone='idle'; render(); return;
+    }
+    state.askedFirst++;
+    state.phone='ringing'; t=0; render();
+    timer=setInterval(()=>{ t+=1; if(t>=MODES[mode].timeout){ finish('miss'); return;} renderPhone(); },TICK_MS);
+  }
+  function finish(kind){
+    clearInterval(timer); timer=null;
+    const v=vesper(), before=v.hist, m=MODES[mode];
+    if(kind==='yes'){ v.hist=clamp(v.hist+YES); state.phone='accepted';
+      log(`Vesper <b>accepted</b> at ${Math.floor(t)}s. Yes-history ${before.toFixed(2)} → ${v.hist.toFixed(2)} <span class="d-good">+0.08</span>`);
+    } else if(kind==='no'){ v.hist=clamp(v.hist-NO); state.phone='declined';
+      log(`Vesper <b>declined</b>. Yes-history ${before.toFixed(2)} → ${v.hist.toFixed(2)} <span class="d-bad">−0.12</span>`);
+    } else {
+      v.hist=clamp(v.hist-m.miss);
+      if(mode==='today'){ state.phone='missed-today';
+        log(`<b>Timed out at 60s</b>, before Vesper reached his phone (~${REACH}s). Scored as a no: ${before.toFixed(2)} → ${v.hist.toFixed(2)} <span class="d-bad">−0.12</span>`);
+      } else { state.phone='missed-fix';
+        log(`Timed out at 90s. Scored as a miss, not a no: ${before.toFixed(2)} → ${v.hist.toFixed(2)} <span class="d-mild">−${m.miss.toFixed(2)}</span>`);
+      }
+    }
+    const nowFirst=ranked()[0].id==='v';
+    if(!nowFirst){
+      log(`<b>Vesper has dropped out of first place in his own area.</b> From now on, his neighbours get asked before him.`);
+    }
+    render();
+  }
+
+  function setMode(m){
+    if(timer){clearInterval(timer);timer=null;}
+    mode=m; $('mode-today').setAttribute('aria-pressed',m==='today'); $('mode-fix').setAttribute('aria-pressed',m==='fix');
+    fresh();
+    log(m==='today'
+      ? `<b>Today (4.2).</b> Vesper starts at a yes-history of <b>0.00</b>, after a few misses in the release week. Try “Rewind to release day” to watch it happen.`
+      : `<b>With the fix.</b> Vesper's score is restored to his pre-4.2 level (<b>0.90</b>), he has 90 seconds to answer, and a miss costs less than a no.`);
+    render();
+  }
+  function toast(msg){ const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2600); }
+
+  $('mode-today').onclick=()=>setMode('today');
+  $('mode-fix').onclick=()=>setMode('fix');
+  $('send').onclick=send;
+  $('skip').onclick=()=>{ if(state.phone!=='ringing')return; const m=MODES[mode];
+    if(t<REACH && m.timeout>REACH){ t=REACH; renderPhone(); } else { t=m.timeout; finish('miss'); } };
+  $('rewind').onclick=()=>{ if(timer){clearInterval(timer);timer=null;} fresh(); vesper().hist=0.90; state.rewound=true;
+    log(`<b>Rewound to 12 Aug.</b> Vesper's yes-history is 0.90 and he's first in his area. Send callouts and let them run out.`); render(); };
+  $('reset').onclick=()=>setMode(mode);
+  $('tab-phone').onclick=()=>{ $('tab-phone').setAttribute('aria-selected',true); $('tab-console').setAttribute('aria-selected',false); $('view-phone').hidden=false; $('view-console').hidden=true; };
+  $('tab-console').onclick=()=>{ $('tab-console').setAttribute('aria-selected',true); $('tab-phone').setAttribute('aria-selected',false); $('view-console').hidden=false; $('view-phone').hidden=true; renderConsole(); };
+
+  setMode('today');
+})();
+</script>
+</body>
+</html>
